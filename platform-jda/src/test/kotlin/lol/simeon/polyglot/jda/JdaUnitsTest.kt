@@ -47,6 +47,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
+import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -80,6 +81,35 @@ class JdaUnitsTest {
         val event = mockk<MessageReceivedEvent>(relaxed = true)
         MessageCommandSender(event).reply("hello")
         verify { event.channel.sendMessage("hello") }
+    }
+
+    @Test
+    fun `slash sender sends a rich reply when not acknowledged`() {
+        val event = mockk<SlashCommandInteractionEvent>(relaxed = true)
+        every { event.isAcknowledged } returns false
+        SlashCommandSender(event).reply {
+            content = "here"
+            embed { setDescription("body") }
+        }
+        verify { event.reply(any<MessageCreateData>()) }
+    }
+
+    @Test
+    fun `slash sender routes a rich reply through the hook once acknowledged`() {
+        val event = mockk<SlashCommandInteractionEvent>(relaxed = true)
+        every { event.isAcknowledged } returns true
+        SlashCommandSender(event).reply { embed { setDescription("body") } }
+        verify { event.hook.sendMessage(any<MessageCreateData>()) }
+    }
+
+    @Test
+    fun `message sender sends a rich reply with an attachment to the channel`() {
+        val event = mockk<MessageReceivedEvent>(relaxed = true)
+        MessageCommandSender(event).reply {
+            content = "report"
+            file("data.txt", "hi".toByteArray())
+        }
+        verify { event.channel.sendMessage(any<MessageCreateData>()) }
     }
 
     @Test

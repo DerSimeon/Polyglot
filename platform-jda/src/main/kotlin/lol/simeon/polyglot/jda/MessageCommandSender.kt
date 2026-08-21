@@ -38,6 +38,7 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.utils.messages.MessageCreateData
 
 /** [JdaSender] backed by a prefix (message) command. */
 public class MessageCommandSender(public val event: MessageReceivedEvent) : JdaSender {
@@ -49,6 +50,11 @@ public class MessageCommandSender(public val event: MessageReceivedEvent) : JdaS
     override val guildChannel: GuildChannel? get() = if (event.isFromGuild) event.guildChannel else null
 
     override fun reply(message: String, ephemeral: Boolean) {
+        // Prefix commands can't be ephemeral; the flag is ignored.
+        event.channel.sendMessage(message).queue()
+    }
+
+    override fun reply(message: MessageCreateData, ephemeral: Boolean) {
         // Prefix commands can't be ephemeral; the flag is ignored.
         event.channel.sendMessage(message).queue()
     }

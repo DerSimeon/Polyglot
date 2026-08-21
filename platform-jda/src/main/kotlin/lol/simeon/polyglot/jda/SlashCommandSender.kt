@@ -38,6 +38,7 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.utils.messages.MessageCreateData
 
 /** [JdaSender] backed by a slash-command interaction. */
 public class SlashCommandSender(public val event: SlashCommandInteractionEvent) : JdaSender {
@@ -49,6 +50,15 @@ public class SlashCommandSender(public val event: SlashCommandInteractionEvent) 
     override val guildChannel: GuildChannel? get() = if (event.isFromGuild) event.guildChannel else null
 
     override fun reply(message: String, ephemeral: Boolean) {
+        if (event.isAcknowledged) {
+            // Already replied/deferred: ephemerality was fixed by the first ack, so it can't change here.
+            event.hook.sendMessage(message).queue()
+        } else {
+            event.reply(message).setEphemeral(ephemeral).queue()
+        }
+    }
+
+    override fun reply(message: MessageCreateData, ephemeral: Boolean) {
         if (event.isAcknowledged) {
             // Already replied/deferred: ephemerality was fixed by the first ack, so it can't change here.
             event.hook.sendMessage(message).queue()

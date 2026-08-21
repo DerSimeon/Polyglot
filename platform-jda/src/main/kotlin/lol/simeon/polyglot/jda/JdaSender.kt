@@ -37,6 +37,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion
+import net.dv8tion.jda.api.utils.messages.MessageCreateData
 
 /** Platform sender for JDA commands, abstracting over slash interactions and message commands. */
 public interface JdaSender {
@@ -57,6 +58,20 @@ public interface JdaSender {
      * interaction has been [defer]red, ephemerality is fixed by that call and this flag has no effect.
      */
     public fun reply(message: String, ephemeral: Boolean = false)
+
+    /**
+     * Sends a pre-built rich [message] (content, embeds and/or file attachments) back to the invoker.
+     * The [ephemeral] rules match the string [reply]: honored on an un-acked slash interaction, fixed
+     * by the first ack afterwards, and ignored by prefix commands.
+     */
+    public fun reply(message: MessageCreateData, ephemeral: Boolean = false)
+
+    /**
+     * Composes a rich reply via the [ReplyBuilder] DSL and sends it — the ergonomic entry point for
+     * embeds and file attachments. See [ReplyBuilder] for the available content.
+     */
+    public fun reply(ephemeral: Boolean = false, block: ReplyBuilder.() -> Unit): Unit =
+        reply(ReplyBuilder().apply(block).build(), ephemeral)
 
     /**
      * Signals that a reply is coming but may take a while. For slash interactions this defers the

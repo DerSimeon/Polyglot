@@ -38,6 +38,7 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
+import net.dv8tion.jda.api.utils.messages.MessageCreateData
 
 /** [JdaSender] backed by an autocomplete interaction; replies are not applicable here. */
 public class AutoCompleteCommandSender(
@@ -52,6 +53,10 @@ public class AutoCompleteCommandSender(
 
     override fun reply(message: String, ephemeral: Boolean) {
         // no-op: autocomplete interactions cannot send text replies
+    }
+
+    override fun reply(message: MessageCreateData, ephemeral: Boolean) {
+        // no-op: autocomplete interactions cannot send message replies
     }
 
     override suspend fun defer(ephemeral: Boolean) {

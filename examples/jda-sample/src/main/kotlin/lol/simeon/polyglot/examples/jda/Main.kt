@@ -40,6 +40,7 @@ import lol.simeon.polyglot.jda.JdaSender
 import lol.simeon.polyglot.jda.annotation.GuildOnly
 import lol.simeon.polyglot.jda.annotation.RequirePermissions
 import net.dv8tion.jda.api.Permission
+import java.awt.Color
 
 @Command(name = "poll", description = "Poll commands")
 class PollCommand {
@@ -49,7 +50,17 @@ class PollCommand {
         @Argument("question") question: String,
         @Named("options") options: String?,
     ) {
-        sender.reply("Poll: $question (${options ?: "yes/no"})")
+        // Rich reply DSL: an embed plus a text file attachment, built once and sent on either backend.
+        sender.reply {
+            content = "New poll created"
+            embed {
+                setTitle("Poll")
+                setDescription(question)
+                addField("Options", options ?: "yes/no", false)
+                setColor(Color.CYAN)
+            }
+            file("poll.txt", "$question\n${options ?: "yes/no"}".toByteArray())
+        }
     }
 
     @Command(name = "purge", description = "Delete recent messages (mods only)")
