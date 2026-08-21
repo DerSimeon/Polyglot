@@ -1,0 +1,6 @@
+name: PolyglotSample
+version: 1.0.0
+main: lol.simeon.polyglot.examples.paper.SamplePlugin
+api-version: '1.21'
+description: Demonstrates the Polyglot command library on PaperMC.
+author: Simeon L

@@ -1,0 +1,28 @@
+# Polyglot detekt configuration.
+# buildUponDefaultConfig = true, so this file only overrides/augments defaults.
+
+libraries:
+  active: true
+  # required by the project: exactly one public top-level class/object per file
+  OneTopLevelClassOrObjectPerFile:
+    active: true
+  # the remaining library rules would flag our intentional public API — keep them off
+  ForbiddenPublicDataClass:
+    active: false
+  LibraryCodeMustSpecifyReturnType:
+    active: false
+  LibraryEntitiesShouldNotBePublic:
+    active: false
+
+style:
+  MaxLineLength:
+    maxLineLength: 140
+  MagicNumber:
+    active: false
+  ReturnCount:
+    max: 3
+    excludeGuardClauses: true
+
+complexity:
+  TooManyFunctions:
+    active: false

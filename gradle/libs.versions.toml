@@ -1,0 +1,44 @@
+[versions]
+kotlin = "2.4.10"
+coroutines = "1.11.0"
+jda = "6.4.2"
+paperLegacy = "1.21.11-R0.1-SNAPSHOT"
+paperModern = "26.2.build.112-stable"
+detekt = "2.0.0-alpha.6"
+kover = "0.9.9"
+dokka = "2.0.0"
+mavenPublish = "0.30.0"
+junit = "5.11.4"
+mockk = "1.14.2"
+mockbukkit = "4.116.3"
+foojay = "1.0.0"
+
+[libraries]
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
+paper-api-legacy = { module = "io.papermc.paper:paper-api", version.ref = "paperLegacy" }
+paper-api-modern = { module = "io.papermc.paper:paper-api", version.ref = "paperModern" }
+
+# test
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+mockbukkit = { module = "org.mockbukkit.mockbukkit:mockbukkit-v1.21", version.ref = "mockbukkit" }
+
+# plugin artifacts consumed by build-logic convention plugins
+plugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+plugin-kotlin-api = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin-api", version.ref = "kotlin" }
+plugin-detekt = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+plugin-kover = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "kover" }
+plugin-dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
+plugin-mavenPublish = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "mavenPublish" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
