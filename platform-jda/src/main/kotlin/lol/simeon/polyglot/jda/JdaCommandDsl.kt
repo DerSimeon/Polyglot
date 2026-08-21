@@ -29,14 +29,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package lol.simeon.polyglot.message
+package lol.simeon.polyglot.jda
 
-/** Stable keys for each user-facing error category, used to look up localized templates. */
-public enum class MessageKey(public val bundleKey: String) {
-    UNKNOWN_COMMAND("polyglot.unknownCommand"),
-    NO_PERMISSION("polyglot.noPermission"),
-    MISSING_ARGUMENT("polyglot.missingArgument"),
-    INVALID_ARGUMENT("polyglot.invalidArgument"),
-    EXECUTION_ERROR("polyglot.executionError"),
-    GUARD_REJECTED("polyglot.guardRejected"),
+import lol.simeon.polyglot.dsl.CommandBuilder
+import lol.simeon.polyglot.jda.guard.GuildOnlyGuard
+import lol.simeon.polyglot.jda.guard.RequirePermissionsGuard
+import net.dv8tion.jda.api.Permission
+
+/** DSL equivalent of `@RequirePermissions`: requires the member to hold all [permissions]. */
+public fun CommandBuilder<JdaSender>.requirePermissions(vararg permissions: Permission) {
+    guard(RequirePermissionsGuard(permissions.toList()))
+}
+
+/** DSL equivalent of `@GuildOnly`: rejects invocations from DMs. */
+public fun CommandBuilder<JdaSender>.guildOnly() {
+    guard(GuildOnlyGuard)
 }

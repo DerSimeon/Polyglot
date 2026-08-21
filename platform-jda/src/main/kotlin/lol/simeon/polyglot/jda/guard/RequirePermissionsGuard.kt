@@ -29,14 +29,30 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package lol.simeon.polyglot.message
+package lol.simeon.polyglot.jda.guard
 
-/** Stable keys for each user-facing error category, used to look up localized templates. */
-public enum class MessageKey(public val bundleKey: String) {
-    UNKNOWN_COMMAND("polyglot.unknownCommand"),
-    NO_PERMISSION("polyglot.noPermission"),
-    MISSING_ARGUMENT("polyglot.missingArgument"),
-    INVALID_ARGUMENT("polyglot.invalidArgument"),
-    EXECUTION_ERROR("polyglot.executionError"),
-    GUARD_REJECTED("polyglot.guardRejected"),
+import lol.simeon.polyglot.exception.NoPermissionException
+import lol.simeon.polyglot.guard.CommandGuard
+import lol.simeon.polyglot.jda.JdaSender
+import net.dv8tion.jda.api.Permission
+
+/**
+ * Rejects the invocation unless the member holds **all** of [permissions], checked against the
+ * channel the command ran in (so per-channel overrides apply). Rejects outside a guild, since these
+ * are guild permissions. Backs the `@RequirePermissions` annotation and the `requirePermissions`
+ * DSL helper.
+ */
+public class RequirePermissionsGuard(
+    public val permissions: List<Permission>,
+) : CommandGuard<JdaSender> {
+
+    override suspend fun check(sender: JdaSender) {
+        val member = sender.member
+        val channel = sender.guildChannel
+        if (member == null || sender.guild == null || channel == null) {
+            throw NoPermissionException(permissions.firstOrNull()?.name ?: "guild")
+        }
+        val missing = permissions.firstOrNull { !member.hasPermission(channel, it) }
+        if (missing != null) throw NoPermissionException(missing.name)
+    }
 }

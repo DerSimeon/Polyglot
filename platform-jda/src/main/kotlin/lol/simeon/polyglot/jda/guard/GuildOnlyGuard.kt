@@ -29,14 +29,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package lol.simeon.polyglot.message
+package lol.simeon.polyglot.jda.guard
 
-/** Stable keys for each user-facing error category, used to look up localized templates. */
-public enum class MessageKey(public val bundleKey: String) {
-    UNKNOWN_COMMAND("polyglot.unknownCommand"),
-    NO_PERMISSION("polyglot.noPermission"),
-    MISSING_ARGUMENT("polyglot.missingArgument"),
-    INVALID_ARGUMENT("polyglot.invalidArgument"),
-    EXECUTION_ERROR("polyglot.executionError"),
-    GUARD_REJECTED("polyglot.guardRejected"),
+import lol.simeon.polyglot.exception.GuardRejectedException
+import lol.simeon.polyglot.guard.CommandGuard
+import lol.simeon.polyglot.jda.JdaSender
+
+/** Rejects the invocation when it did not originate from a guild. Backs the `@GuildOnly` annotation. */
+public object GuildOnlyGuard : CommandGuard<JdaSender> {
+    override suspend fun check(sender: JdaSender) {
+        if (sender.guild == null) {
+            throw GuardRejectedException("This command can only be used in a server.")
+        }
+    }
 }

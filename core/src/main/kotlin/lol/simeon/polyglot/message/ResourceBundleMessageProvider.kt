@@ -33,6 +33,7 @@ package lol.simeon.polyglot.message
 
 import lol.simeon.polyglot.exception.ArgumentParseException
 import lol.simeon.polyglot.exception.CommandExecutionException
+import lol.simeon.polyglot.exception.GuardRejectedException
 import lol.simeon.polyglot.exception.MissingArgumentException
 import lol.simeon.polyglot.exception.NoPermissionException
 import lol.simeon.polyglot.exception.PolyglotException
@@ -63,5 +64,6 @@ public class ResourceBundleMessageProvider<S>(
         is ArgumentParseException ->
             MessageKey.INVALID_ARGUMENT to listOf(error.input, error.argumentName, error.expectedType)
         is CommandExecutionException -> MessageKey.EXECUTION_ERROR to listOf(error.commandPath)
+        is GuardRejectedException -> MessageKey.GUARD_REJECTED to listOf(error.reason)
     }
 }

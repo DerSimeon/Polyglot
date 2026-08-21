@@ -29,14 +29,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package lol.simeon.polyglot.message
+package lol.simeon.polyglot.jda.annotation
 
-/** Stable keys for each user-facing error category, used to look up localized templates. */
-public enum class MessageKey(public val bundleKey: String) {
-    UNKNOWN_COMMAND("polyglot.unknownCommand"),
-    NO_PERMISSION("polyglot.noPermission"),
-    MISSING_ARGUMENT("polyglot.missingArgument"),
-    INVALID_ARGUMENT("polyglot.invalidArgument"),
-    EXECUTION_ERROR("polyglot.executionError"),
-    GUARD_REJECTED("polyglot.guardRejected"),
-}
+/**
+ * Restricts the annotated command class (a group) or handler function (a leaf) to guild contexts,
+ * rejecting invocations from DMs. On the root command this is also synced to Discord's native
+ * guild-only flag; runtime enforcement still covers every node.
+ */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+public annotation class GuildOnly

@@ -34,6 +34,13 @@ permissions, and coroutine-based execution.
 (rest-of-input), `@Named` (`--name value` / `-x value`), `@Flag` (boolean `--name`), `@Permission`,
 `@Suggestion` (named provider), `@Range`, `@Choice`.
 
+**Guards** — beyond the platform-agnostic string `@Permission`, a command class or function may carry
+platform-specific preconditions that run before the handler (and before descending into a group, so a
+guard on a group protects its subcommands). On JDA: `@RequirePermissions(Permission.…)` (type-safe,
+AND semantics, checked per-channel) and `@GuildOnly`. Both are also mirrored onto Discord's native
+command metadata for root commands (`DefaultMemberPermissions` / guild-only context) so unauthorized
+users don't even see the command. Register your own via a `GuardContributor`.
+
 ### Named options, flags & validation
 
 ```kotlin
@@ -116,6 +123,13 @@ manager.register(PartyCommand())
 jda.addEventListener(manager.eventListener)
 manager.updateGuildCommands(guild)                                  // push slash commands
 ```
+The `JdaSender` handed to a command exposes `user`, `member`, `guild`, `channel` (a JDA
+`MessageChannelUnion` — call `asGuildChannel()`, `asPrivateChannel()`, `asVoiceChannel()`, …) and
+`guildChannel` (the `GuildChannel`, or `null` in DMs). Handlers may be `suspend` and call
+`sender.defer(ephemeral = …)` to keep a slash interaction alive past Discord's 3-second window while
+doing async work (prefix commands show a typing indicator instead). Guard commands with
+`@RequirePermissions`/`@GuildOnly` (or the `requirePermissions(…)` / `guildOnly()` DSL helpers).
+
 Discord limits slash nesting to group → subcommand (depth 2). Deeper trees are **flattened**: a leaf
 at `root → a → b → c` is registered as command `root`, group `a`, subcommand `b-c`, and the manager
 reverses the mapping on dispatch (so command names must not contain `-`). Prefix commands keep the

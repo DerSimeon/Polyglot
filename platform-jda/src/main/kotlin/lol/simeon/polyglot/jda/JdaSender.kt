@@ -35,6 +35,8 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion
 
 /** Platform sender for JDA commands, abstracting over slash interactions and message commands. */
 public interface JdaSender {
@@ -42,5 +44,20 @@ public interface JdaSender {
     public val user: User
     public val member: Member?
     public val guild: Guild?
+
+    /** The channel the command was invoked in; a [MessageChannelUnion] with `asGuildChannel()` etc. */
+    public val channel: MessageChannelUnion?
+
+    /** The invoking channel as a [GuildChannel], or `null` in DMs / when unavailable. */
+    public val guildChannel: GuildChannel?
+
     public fun reply(message: String)
+
+    /**
+     * Signals that a reply is coming but may take a while. For slash interactions this defers the
+     * reply (keeping the interaction valid past Discord's 3s window); [ephemeral] makes the eventual
+     * reply visible only to the invoker. For prefix commands it shows a typing indicator, which
+     * clears automatically once [reply] sends. No-op where deferral does not apply.
+     */
+    public suspend fun defer(ephemeral: Boolean = false)
 }

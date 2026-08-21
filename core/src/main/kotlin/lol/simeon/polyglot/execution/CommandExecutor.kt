@@ -62,14 +62,14 @@ public class CommandExecutor<S>(
         val queue = ArgumentQueue(args)
         val path = mutableListOf(root.name)
         var node = root
-        checkPermission(node, sender)
+        authorize(node, sender)
 
         while (queue.hasNext()) {
             val child = node.child(queue.peek()!!) ?: break
             queue.next()
             node = child
             path += node.name
-            checkPermission(node, sender)
+            authorize(node, sender)
         }
 
         val handler = node.handler ?: throw UnknownCommandException(path.joinToString(" "))
@@ -83,6 +83,12 @@ public class CommandExecutor<S>(
         } catch (ex: Throwable) {
             throw CommandExecutionException(path.joinToString(" "), ex)
         }
+    }
+
+    /** Enforces the node's string permission, then its runtime guards, before it may run. */
+    private suspend fun authorize(node: CommandNode<S>, sender: S) {
+        checkPermission(node, sender)
+        for (guard in node.guards) guard.check(sender)
     }
 
     private fun checkPermission(node: CommandNode<S>, sender: S) {

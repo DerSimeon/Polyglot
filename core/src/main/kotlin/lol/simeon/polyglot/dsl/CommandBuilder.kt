@@ -33,6 +33,7 @@ package lol.simeon.polyglot.dsl
 
 import lol.simeon.polyglot.argument.ArgumentValidator
 import lol.simeon.polyglot.context.CommandContext
+import lol.simeon.polyglot.guard.CommandGuard
 import lol.simeon.polyglot.model.CommandArgument
 import lol.simeon.polyglot.model.CommandHandler
 import lol.simeon.polyglot.model.CommandNode
@@ -48,6 +49,7 @@ public class CommandBuilder<S>(private val name: String) {
     private var permission: String? = null
     private var handler: CommandHandler<S>? = null
     private val arguments: MutableList<CommandArgument> = mutableListOf()
+    private val guards: MutableList<CommandGuard<S>> = mutableListOf()
     private val children: LinkedHashMap<String, CommandNode<S>> = LinkedHashMap()
 
     public fun aliases(vararg values: String) {
@@ -60,6 +62,11 @@ public class CommandBuilder<S>(private val name: String) {
 
     public fun permission(node: String) {
         permission = node
+    }
+
+    /** Attaches a runtime guard that runs before this node's handler (and its subcommands). */
+    public fun guard(guard: CommandGuard<S>) {
+        guards += guard
     }
 
     /** Adds a fully-specified argument. */
@@ -149,6 +156,7 @@ public class CommandBuilder<S>(private val name: String) {
         arguments = arguments.toList(),
         handler = handler,
         children = children,
+        guards = guards.toList(),
     )
 }
 

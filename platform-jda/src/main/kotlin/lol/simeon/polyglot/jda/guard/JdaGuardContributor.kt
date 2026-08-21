@@ -29,14 +29,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package lol.simeon.polyglot.message
+package lol.simeon.polyglot.jda.guard
 
-/** Stable keys for each user-facing error category, used to look up localized templates. */
-public enum class MessageKey(public val bundleKey: String) {
-    UNKNOWN_COMMAND("polyglot.unknownCommand"),
-    NO_PERMISSION("polyglot.noPermission"),
-    MISSING_ARGUMENT("polyglot.missingArgument"),
-    INVALID_ARGUMENT("polyglot.invalidArgument"),
-    EXECUTION_ERROR("polyglot.executionError"),
-    GUARD_REJECTED("polyglot.guardRejected"),
+import lol.simeon.polyglot.guard.CommandGuard
+import lol.simeon.polyglot.jda.JdaSender
+import lol.simeon.polyglot.jda.annotation.GuildOnly
+import lol.simeon.polyglot.jda.annotation.RequirePermissions
+import lol.simeon.polyglot.scanner.GuardContributor
+import kotlin.reflect.KAnnotatedElement
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
+
+/** Translates the JDA `@RequirePermissions` and `@GuildOnly` annotations into runtime guards. */
+public class JdaGuardContributor : GuardContributor<JdaSender> {
+    override fun contribute(element: KAnnotatedElement): List<CommandGuard<JdaSender>> {
+        val guards = mutableListOf<CommandGuard<JdaSender>>()
+        element.findAnnotation<RequirePermissions>()
+            ?.value
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { guards += RequirePermissionsGuard(it.toList()) }
+        if (element.hasAnnotation<GuildOnly>()) guards += GuildOnlyGuard
+        return guards
+    }
 }

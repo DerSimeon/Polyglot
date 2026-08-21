@@ -40,4 +40,5 @@ plugins {
 dependencies {
     api(project(":core"))
     api(libs.jda)
+    implementation(libs.kotlin.reflect)
 }

@@ -29,14 +29,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package lol.simeon.polyglot.message
+package lol.simeon.polyglot.exception
 
-/** Stable keys for each user-facing error category, used to look up localized templates. */
-public enum class MessageKey(public val bundleKey: String) {
-    UNKNOWN_COMMAND("polyglot.unknownCommand"),
-    NO_PERMISSION("polyglot.noPermission"),
-    MISSING_ARGUMENT("polyglot.missingArgument"),
-    INVALID_ARGUMENT("polyglot.invalidArgument"),
-    EXECUTION_ERROR("polyglot.executionError"),
-    GUARD_REJECTED("polyglot.guardRejected"),
-}
+/**
+ * A [lol.simeon.polyglot.guard.CommandGuard] rejected the invocation. [reason] is the user-facing
+ * explanation (e.g. "This command can only be used in a server."). Guards with a more specific
+ * failure — such as a missing permission — should throw the matching exception instead
+ * (e.g. [NoPermissionException]).
+ */
+public class GuardRejectedException(
+    public val reason: String,
+) : PolyglotException(reason)

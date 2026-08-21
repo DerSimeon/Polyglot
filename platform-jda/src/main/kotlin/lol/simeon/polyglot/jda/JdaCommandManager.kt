@@ -37,7 +37,11 @@ import kotlinx.coroutines.launch
 import lol.simeon.polyglot.CommandManager
 import lol.simeon.polyglot.exception.PolyglotException
 import lol.simeon.polyglot.model.CommandArgument
+import lol.simeon.polyglot.jda.guard.GuildOnlyGuard
+import lol.simeon.polyglot.jda.guard.JdaGuardContributor
+import lol.simeon.polyglot.jda.guard.RequirePermissionsGuard
 import lol.simeon.polyglot.model.CommandNode
+import lol.simeon.polyglot.scanner.GuardContributor
 import lol.simeon.polyglot.suggestion.SuggestionContext
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
@@ -47,6 +51,8 @@ import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInterac
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.dv8tion.jda.api.interactions.InteractionContextType
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 
 /**
@@ -65,6 +71,8 @@ public open class JdaCommandManager(
 
     private val slashBuilder = SlashCommandTreeBuilder()
 
+    override val guardContributors: List<GuardContributor<JdaSender>> = listOf(JdaGuardContributor())
+
     init {
         parsers.register(Member::class, MemberArgumentParser)
         parsers.register(Role::class, RoleArgumentParser)
@@ -82,7 +90,24 @@ public open class JdaCommandManager(
 
     /** Builds the slash-command payloads for every registered root command. */
     public fun buildSlashCommands(): List<SlashCommandData> =
-        rootNodes().map { slashBuilder.build(it) }
+        rootNodes().map { node -> syncNativeGuards(node, slashBuilder.build(node)) }
+
+    /**
+     * Mirrors a root command's runtime guards onto Discord's native command metadata so unauthorized
+     * users don't even see it: `@RequirePermissions` becomes [DefaultMemberPermissions], `@GuildOnly`
+     * a guild-only interaction context. Only root-level guards sync (Discord's limit); every node is
+     * still enforced at runtime.
+     */
+    private fun syncNativeGuards(root: CommandNode<JdaSender>, data: SlashCommandData): SlashCommandData {
+        val permissions = root.guards.filterIsInstance<RequirePermissionsGuard>().flatMap { it.permissions }
+        if (permissions.isNotEmpty()) {
+            data.setDefaultPermissions(DefaultMemberPermissions.enabledFor(permissions))
+        }
+        if (root.guards.any { it === GuildOnlyGuard }) {
+            data.setContexts(InteractionContextType.GUILD)
+        }
+        return data
+    }
 
     /** Convenience: registers all commands globally on [guild] is preferred for development speed. */
     public fun updateGuildCommands(guild: Guild) {

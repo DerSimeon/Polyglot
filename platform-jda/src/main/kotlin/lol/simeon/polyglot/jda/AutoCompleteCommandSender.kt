@@ -35,6 +35,8 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 
 /** [JdaSender] backed by an autocomplete interaction; replies are not applicable here. */
@@ -45,8 +47,14 @@ public class AutoCompleteCommandSender(
     override val user: User get() = event.user
     override val member: Member? get() = event.member
     override val guild: Guild? get() = event.guild
+    override val channel: MessageChannelUnion? get() = event.channel
+    override val guildChannel: GuildChannel? get() = if (event.isFromGuild) event.guildChannel else null
 
     override fun reply(message: String) {
         // no-op: autocomplete interactions cannot send text replies
+    }
+
+    override suspend fun defer(ephemeral: Boolean) {
+        // no-op: autocomplete interactions cannot be deferred
     }
 }

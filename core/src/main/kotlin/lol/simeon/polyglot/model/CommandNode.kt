@@ -31,6 +31,8 @@
 
 package lol.simeon.polyglot.model
 
+import lol.simeon.polyglot.guard.CommandGuard
+
 /**
  * A node in the resolved command tree. A node may be a group (has [children]), a leaf (has a
  * [handler] and [arguments]), or both (a group with a default handler). Children are keyed by
@@ -44,6 +46,7 @@ public class CommandNode<S>(
     public val arguments: List<CommandArgument>,
     public val handler: CommandHandler<S>?,
     children: Map<String, CommandNode<S>>,
+    public val guards: List<CommandGuard<S>> = emptyList(),
 ) {
     public val children: Map<String, CommandNode<S>> = children
 

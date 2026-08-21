@@ -47,6 +47,7 @@ import lol.simeon.polyglot.message.MessageProvider
 import lol.simeon.polyglot.model.CommandNode
 import lol.simeon.polyglot.permission.PermissionResolver
 import lol.simeon.polyglot.scanner.AnnotationScanner
+import lol.simeon.polyglot.scanner.GuardContributor
 import lol.simeon.polyglot.suggestion.Suggestion
 import lol.simeon.polyglot.suggestion.SuggestionRegistry
 
@@ -71,10 +72,13 @@ public abstract class CommandManager<S> {
     /** Error formatter; defaults to the exception message. Override to localize. */
     protected open val messageProvider: MessageProvider<S> = DefaultMessageProvider()
 
+    /** Contributors translating platform annotations into runtime guards. Override per platform. */
+    protected open val guardContributors: List<GuardContributor<S>> = emptyList()
+
     /** Scope commands are dispatched in when using [launchDispatch]. */
     protected abstract val coroutineScope: CoroutineScope
 
-    private val scanner = AnnotationScanner<S>()
+    private val scanner: AnnotationScanner<S> by lazy { AnnotationScanner(guardContributors) }
     private val roots = LinkedHashMap<String, CommandNode<S>>()
     private val executor: CommandExecutor<S> by lazy { CommandExecutor(parsers, permissionResolver) }
     private val completer: CommandCompleter<S> by lazy { CommandCompleter(suggestions, permissionResolver) }

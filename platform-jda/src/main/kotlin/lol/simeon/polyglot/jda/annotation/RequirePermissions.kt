@@ -29,14 +29,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package lol.simeon.polyglot.message
+package lol.simeon.polyglot.jda.annotation
 
-/** Stable keys for each user-facing error category, used to look up localized templates. */
-public enum class MessageKey(public val bundleKey: String) {
-    UNKNOWN_COMMAND("polyglot.unknownCommand"),
-    NO_PERMISSION("polyglot.noPermission"),
-    MISSING_ARGUMENT("polyglot.missingArgument"),
-    INVALID_ARGUMENT("polyglot.invalidArgument"),
-    EXECUTION_ERROR("polyglot.executionError"),
-    GUARD_REJECTED("polyglot.guardRejected"),
-}
+import net.dv8tion.jda.api.Permission
+
+/**
+ * Requires the invoking member to hold **all** of the listed JDA [Permission]s (AND semantics),
+ * checked against the channel the command ran in so per-channel overrides are respected. Applies to
+ * a command class (a group, protecting its subcommands) or a handler function (a leaf).
+ *
+ * Because these are guild permissions, the command is rejected outside a guild (in DMs). On the root
+ * command the permissions are also synced to Discord's native `DefaultMemberPermissions`, so users
+ * who lack them do not see the command in the picker; runtime enforcement still covers every node.
+ */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+public annotation class RequirePermissions(
+    vararg val value: Permission,
+)

@@ -29,14 +29,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package lol.simeon.polyglot.message
+package lol.simeon.polyglot.jda
 
-/** Stable keys for each user-facing error category, used to look up localized templates. */
-public enum class MessageKey(public val bundleKey: String) {
-    UNKNOWN_COMMAND("polyglot.unknownCommand"),
-    NO_PERMISSION("polyglot.noPermission"),
-    MISSING_ARGUMENT("polyglot.missingArgument"),
-    INVALID_ARGUMENT("polyglot.invalidArgument"),
-    EXECUTION_ERROR("polyglot.executionError"),
-    GUARD_REJECTED("polyglot.guardRejected"),
-}
+import kotlinx.coroutines.suspendCancellableCoroutine
+import net.dv8tion.jda.api.requests.RestAction
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+
+/**
+ * Suspends until this [RestAction] completes, returning its result or rethrowing its failure.
+ * A lightweight bridge so command handlers can `await()` JDA calls without pulling in an extra
+ * coroutine-interop dependency.
+ */
+internal suspend fun <T> RestAction<T>.await(): T =
+    suspendCancellableCoroutine { continuation ->
+        queue(
+            { value -> continuation.resume(value) },
+            { error -> continuation.resumeWithException(error) },
+        )
+    }

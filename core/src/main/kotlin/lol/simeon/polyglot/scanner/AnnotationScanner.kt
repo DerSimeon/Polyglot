@@ -43,9 +43,11 @@ import lol.simeon.polyglot.annotation.Permission
 import lol.simeon.polyglot.annotation.Range
 import lol.simeon.polyglot.annotation.Suggestion
 import lol.simeon.polyglot.context.CommandContext
+import lol.simeon.polyglot.guard.CommandGuard
 import lol.simeon.polyglot.model.CommandArgument
 import lol.simeon.polyglot.model.CommandHandler
 import lol.simeon.polyglot.model.CommandNode
+import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
@@ -64,7 +66,9 @@ import kotlin.reflect.full.valueParameters
  * Convention: the first value parameter of a handler function receives the sender (or the whole
  * [CommandContext] if typed as such); the remaining parameters are the command's arguments.
  */
-public class AnnotationScanner<S> {
+public class AnnotationScanner<S>(
+    private val guardContributors: List<GuardContributor<S>> = emptyList(),
+) {
 
     public fun scan(handler: Any): CommandNode<S> {
         val kClass = handler::class
@@ -103,6 +107,7 @@ public class AnnotationScanner<S> {
             arguments = groupArguments,
             handler = groupHandler,
             children = children,
+            guards = guardsFor(kClass),
         )
     }
 
@@ -116,8 +121,12 @@ public class AnnotationScanner<S> {
             arguments = arguments,
             handler = handler,
             children = emptyMap(),
+            guards = guardsFor(function),
         )
     }
+
+    private fun guardsFor(element: KAnnotatedElement): List<CommandGuard<S>> =
+        guardContributors.flatMap { it.contribute(element) }
 
     private fun buildFunction(instance: Any, function: KFunction<*>): Pair<List<CommandArgument>, CommandHandler<S>> {
         val valueParameters = function.valueParameters

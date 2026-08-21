@@ -31,11 +31,15 @@
 
 package lol.simeon.polyglot.examples.jda
 
+import kotlinx.coroutines.delay
 import lol.simeon.polyglot.annotation.Argument
 import lol.simeon.polyglot.annotation.Command
 import lol.simeon.polyglot.annotation.Named
 import lol.simeon.polyglot.jda.JdaCommandManager
 import lol.simeon.polyglot.jda.JdaSender
+import lol.simeon.polyglot.jda.annotation.GuildOnly
+import lol.simeon.polyglot.jda.annotation.RequirePermissions
+import net.dv8tion.jda.api.Permission
 
 @Command(name = "poll", description = "Poll commands")
 class PollCommand {
@@ -46,6 +50,17 @@ class PollCommand {
         @Named("options") options: String?,
     ) {
         sender.reply("Poll: $question (${options ?: "yes/no"})")
+    }
+
+    @Command(name = "purge", description = "Delete recent messages (mods only)")
+    @GuildOnly
+    @RequirePermissions(Permission.MESSAGE_MANAGE)
+    suspend fun purge(sender: JdaSender, @Argument("count") count: Int) {
+        // Defer: keeps the interaction alive past Discord's 3s window while we work.
+        sender.defer(ephemeral = true)
+        delay(1_000) // stand-in for an async query / bulk delete
+        val where = sender.guildChannel?.name ?: "this channel"
+        sender.reply("Purged $count messages in #$where")
     }
 }
 

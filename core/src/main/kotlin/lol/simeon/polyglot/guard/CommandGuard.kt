@@ -29,14 +29,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package lol.simeon.polyglot.message
+package lol.simeon.polyglot.guard
 
-/** Stable keys for each user-facing error category, used to look up localized templates. */
-public enum class MessageKey(public val bundleKey: String) {
-    UNKNOWN_COMMAND("polyglot.unknownCommand"),
-    NO_PERMISSION("polyglot.noPermission"),
-    MISSING_ARGUMENT("polyglot.missingArgument"),
-    INVALID_ARGUMENT("polyglot.invalidArgument"),
-    EXECUTION_ERROR("polyglot.executionError"),
-    GUARD_REJECTED("polyglot.guardRejected"),
+/**
+ * A precondition attached to a [lol.simeon.polyglot.model.CommandNode] that runs before the node's
+ * handler (and before descending into it). Return normally to allow execution; throw a
+ * [lol.simeon.polyglot.exception.PolyglotException] to reject it — the manager routes the failure to
+ * its error handler. Guards run for every node traversed on the resolved command path, so a guard on
+ * a group also protects its subcommands.
+ *
+ * Platforms attach guards via a [lol.simeon.polyglot.scanner.GuardContributor]; the DSL attaches them
+ * via `guard(...)`.
+ */
+public fun interface CommandGuard<in S> {
+    /** Throws a [lol.simeon.polyglot.exception.PolyglotException] to reject; returns to allow. */
+    public suspend fun check(sender: S)
 }

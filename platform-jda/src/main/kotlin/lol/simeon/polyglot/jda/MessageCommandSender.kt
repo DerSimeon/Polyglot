@@ -35,6 +35,8 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 
 /** [JdaSender] backed by a prefix (message) command. */
@@ -43,8 +45,16 @@ public class MessageCommandSender(public val event: MessageReceivedEvent) : JdaS
     override val user: User get() = event.author
     override val member: Member? get() = if (event.isFromGuild) event.member else null
     override val guild: Guild? get() = if (event.isFromGuild) event.guild else null
+    override val channel: MessageChannelUnion? get() = event.channel
+    override val guildChannel: GuildChannel? get() = if (event.isFromGuild) event.guildChannel else null
 
     override fun reply(message: String) {
         event.channel.sendMessage(message).queue()
+    }
+
+    override suspend fun defer(ephemeral: Boolean) {
+        // Prefix commands can't be deferred; a typing indicator is the closest analog and clears
+        // automatically once reply() sends a message.
+        event.channel.sendTyping().queue()
     }
 }

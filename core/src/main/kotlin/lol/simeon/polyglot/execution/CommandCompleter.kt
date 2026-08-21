@@ -31,6 +31,7 @@
 
 package lol.simeon.polyglot.execution
 
+import lol.simeon.polyglot.exception.PolyglotException
 import lol.simeon.polyglot.model.CommandArgument
 import lol.simeon.polyglot.model.CommandNode
 import lol.simeon.polyglot.permission.PermissionResolver
@@ -72,10 +73,11 @@ public class CommandCompleter<S>(
 
         // subcommand names at the first argument position
         if (preceding.isEmpty()) {
-            node.childNodes
-                .filter { permits(it, sender) }
-                .filter { it.name.startsWith(partial, ignoreCase = true) }
-                .forEach { result += Suggestion(it.name, it.description.ifEmpty { null }) }
+            for (child in node.childNodes) {
+                if (child.name.startsWith(partial, ignoreCase = true) && permits(child, sender)) {
+                    result += Suggestion(child.name, child.description.ifEmpty { null })
+                }
+            }
         }
 
         // positional argument suggestion (options and their values are skipped when counting)
@@ -98,6 +100,14 @@ public class CommandCompleter<S>(
             .map { Suggestion(it) }
     }
 
-    private fun permits(node: CommandNode<S>, sender: S): Boolean =
-        node.permission?.let { permissions.hasPermission(sender, it) } ?: true
+    private suspend fun permits(node: CommandNode<S>, sender: S): Boolean {
+        val permitted = node.permission?.let { permissions.hasPermission(sender, it) } ?: true
+        if (!permitted) return false
+        return try {
+            node.guards.forEach { it.check(sender) }
+            true
+        } catch (_: PolyglotException) {
+            false
+        }
+    }
 }

@@ -29,14 +29,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package lol.simeon.polyglot.message
+package lol.simeon.polyglot.scanner
 
-/** Stable keys for each user-facing error category, used to look up localized templates. */
-public enum class MessageKey(public val bundleKey: String) {
-    UNKNOWN_COMMAND("polyglot.unknownCommand"),
-    NO_PERMISSION("polyglot.noPermission"),
-    MISSING_ARGUMENT("polyglot.missingArgument"),
-    INVALID_ARGUMENT("polyglot.invalidArgument"),
-    EXECUTION_ERROR("polyglot.executionError"),
-    GUARD_REJECTED("polyglot.guardRejected"),
+import lol.simeon.polyglot.guard.CommandGuard
+import kotlin.reflect.KAnnotatedElement
+
+/**
+ * Inspects an annotated command element — the command class (a group) or a handler function (a leaf
+ * or default) — and emits any [CommandGuard]s it should carry. Platforms register contributors on
+ * their [lol.simeon.polyglot.CommandManager] to translate platform-specific annotations (e.g. a JDA
+ * `@RequirePermissions`) into runtime guards without the core scanner knowing about them.
+ */
+public fun interface GuardContributor<S> {
+    /** Returns the guards contributed for [element], or an empty list if none apply. */
+    public fun contribute(element: KAnnotatedElement): List<CommandGuard<S>>
 }
