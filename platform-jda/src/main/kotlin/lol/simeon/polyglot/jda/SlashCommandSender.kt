@@ -48,11 +48,12 @@ public class SlashCommandSender(public val event: SlashCommandInteractionEvent) 
     override val channel: MessageChannelUnion? get() = event.channel
     override val guildChannel: GuildChannel? get() = if (event.isFromGuild) event.guildChannel else null
 
-    override fun reply(message: String) {
+    override fun reply(message: String, ephemeral: Boolean) {
         if (event.isAcknowledged) {
+            // Already replied/deferred: ephemerality was fixed by the first ack, so it can't change here.
             event.hook.sendMessage(message).queue()
         } else {
-            event.reply(message).setEphemeral(true).queue()
+            event.reply(message).setEphemeral(ephemeral).queue()
         }
     }
 

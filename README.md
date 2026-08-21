@@ -125,9 +125,11 @@ manager.updateGuildCommands(guild)                                  // push slas
 ```
 The `JdaSender` handed to a command exposes `user`, `member`, `guild`, `channel` (a JDA
 `MessageChannelUnion` — call `asGuildChannel()`, `asPrivateChannel()`, `asVoiceChannel()`, …) and
-`guildChannel` (the `GuildChannel`, or `null` in DMs). Handlers may be `suspend` and call
-`sender.defer(ephemeral = …)` to keep a slash interaction alive past Discord's 3-second window while
-doing async work (prefix commands show a typing indicator instead). Guard commands with
+`guildChannel` (the `GuildChannel`, or `null` in DMs). `reply(message, ephemeral = …)` posts
+publicly by default; pass `ephemeral = true` for an invoker-only reply (ignored by prefix commands).
+Handlers may be `suspend` and call `sender.defer(ephemeral = …)` to keep a slash interaction alive
+past Discord's 3-second window while doing async work (prefix commands show a typing indicator
+instead); after deferring, ephemerality is fixed by that `defer` call. Guard commands with
 `@RequirePermissions`/`@GuildOnly` (or the `requirePermissions(…)` / `guildOnly()` DSL helpers).
 
 Discord limits slash nesting to group → subcommand (depth 2). Deeper trees are **flattened**: a leaf

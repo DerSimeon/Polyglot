@@ -50,7 +50,7 @@ public class AutoCompleteCommandSender(
     override val channel: MessageChannelUnion? get() = event.channel
     override val guildChannel: GuildChannel? get() = if (event.isFromGuild) event.guildChannel else null
 
-    override fun reply(message: String) {
+    override fun reply(message: String, ephemeral: Boolean) {
         // no-op: autocomplete interactions cannot send text replies
     }
 

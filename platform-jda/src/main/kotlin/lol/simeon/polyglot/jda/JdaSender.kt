@@ -51,7 +51,12 @@ public interface JdaSender {
     /** The invoking channel as a [GuildChannel], or `null` in DMs / when unavailable. */
     public val guildChannel: GuildChannel?
 
-    public fun reply(message: String)
+    /**
+     * Sends [message] back to the invoker. On slash interactions [ephemeral] makes the reply visible
+     * only to the invoker; it is ignored by prefix commands (which always post publicly). Once the
+     * interaction has been [defer]red, ephemerality is fixed by that call and this flag has no effect.
+     */
+    public fun reply(message: String, ephemeral: Boolean = false)
 
     /**
      * Signals that a reply is coming but may take a while. For slash interactions this defers the

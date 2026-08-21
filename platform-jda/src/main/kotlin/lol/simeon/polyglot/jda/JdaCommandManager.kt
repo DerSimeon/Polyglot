@@ -85,7 +85,7 @@ public open class JdaCommandManager(
     }
 
     override fun onError(sender: JdaSender, error: PolyglotException) {
-        sender.reply(formatError(sender, error))
+        sender.reply(formatError(sender, error), ephemeral = true)
     }
 
     /** Builds the slash-command payloads for every registered root command. */

@@ -48,7 +48,8 @@ public class MessageCommandSender(public val event: MessageReceivedEvent) : JdaS
     override val channel: MessageChannelUnion? get() = event.channel
     override val guildChannel: GuildChannel? get() = if (event.isFromGuild) event.guildChannel else null
 
-    override fun reply(message: String) {
+    override fun reply(message: String, ephemeral: Boolean) {
+        // Prefix commands can't be ephemeral; the flag is ignored.
         event.channel.sendMessage(message).queue()
     }
 
