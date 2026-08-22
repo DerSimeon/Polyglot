@@ -43,6 +43,8 @@ import lol.simeon.polyglot.jda.guard.RequirePermissionsGuard
 import lol.simeon.polyglot.model.CommandNode
 import lol.simeon.polyglot.scanner.GuardContributor
 import lol.simeon.polyglot.suggestion.SuggestionContext
+import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Role
@@ -109,9 +111,43 @@ public open class JdaCommandManager(
         return data
     }
 
-    /** Convenience: registers all commands globally on [guild] is preferred for development speed. */
+    /**
+     * Pushes every registered command to [guild] only. Guild-scoped updates propagate instantly, so
+     * this is preferred during development. For production use [updateGlobalCommands].
+     */
     public fun updateGuildCommands(guild: Guild) {
         guild.updateCommands().addCommands(buildSlashCommands()).queue()
+    }
+
+    /**
+     * Pushes every registered command globally. No guild is required. Global propagation can lag
+     * (up to an hour), so prefer [updateGuildCommands] while iterating.
+     */
+    public fun updateGlobalCommands(jda: JDA) {
+        jda.updateCommands().addCommands(buildSlashCommands()).queue()
+    }
+
+    /**
+     * Builds a [ListenerAdapter] that pushes commands automatically once JDA is ready, per [pushType]:
+     * [PushType.GLOBAL] syncs on `ReadyEvent`, [PushType.GUILD] on each `GuildReadyEvent`,
+     * [PushType.NONE] does nothing. Add it alongside [eventListener] to skip a hand-written handler.
+     */
+    public fun commandSyncListener(pushType: PushType): ListenerAdapter = CommandSyncListener(this, pushType)
+
+    /**
+     * Builds a bot invite URL via [jda]. Aggregates the permissions declared through
+     * `@RequirePermissions` on root commands — a heuristic: those are the *user* permissions a command
+     * gates on, which usually match the *bot* permissions it needs — then adds
+     * [Permission.USE_APPLICATION_COMMANDS] and any [additional] bot-only permissions (e.g.
+     * [Permission.MESSAGE_HISTORY]).
+     */
+    public fun inviteUrl(jda: JDA, vararg additional: Permission): String {
+        val declared = rootNodes()
+            .flatMap { it.guards }
+            .filterIsInstance<RequirePermissionsGuard>()
+            .flatMap { it.permissions }
+        val permissions = (declared + additional + Permission.USE_APPLICATION_COMMANDS).distinct()
+        return jda.getInviteUrl(permissions)
     }
 
     /** JDA listener bridging interactions and messages into the command engine. */

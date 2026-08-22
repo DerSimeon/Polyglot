@@ -29,43 +29,18 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-pluginManagement {
-    includeBuild("build-logic")
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
-    }
+package lol.simeon.polyglot.jda
+
+/**
+ * How registered commands are automatically pushed to Discord once JDA is ready.
+ *
+ * - [NONE] — do not push automatically; call [JdaCommandManager.updateGuildCommands] or
+ *   [JdaCommandManager.updateGlobalCommands] yourself.
+ * - [GUILD] — push to each guild as it becomes ready. Propagates instantly; ideal for development.
+ * - [GLOBAL] — push once, globally, when the session is ready. Propagation can lag.
+ */
+public enum class PushType {
+    NONE,
+    GUILD,
+    GLOBAL,
 }
-
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-}
-
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        mavenCentral()
-        maven("https://repo.papermc.io/repository/maven-public/") {
-            name = "papermc"
-        }
-    }
-}
-
-rootProject.name = "Polyglot"
-
-include(
-    ":core",
-    ":platform-cli",
-    ":platform-jda",
-    ":platform-jda-ktx",
-    ":platform-paper-common",
-    ":platform-paper-legacy",
-    ":platform-paper-modern",
-)
-
-// runnable demos (not published, excluded from coverage aggregation)
-include(
-    ":examples:cli-sample",
-    ":examples:jda-sample",
-    ":examples:paper-sample",
-)

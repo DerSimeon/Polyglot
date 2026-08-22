@@ -29,43 +29,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-pluginManagement {
-    includeBuild("build-logic")
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
+package lol.simeon.polyglot.jda
+
+import net.dv8tion.jda.api.events.guild.GuildReadyEvent
+import net.dv8tion.jda.api.events.session.ReadyEvent
+import net.dv8tion.jda.api.hooks.ListenerAdapter
+
+/**
+ * Pushes [manager]'s registered commands to Discord automatically once JDA is ready, removing the
+ * need for a hand-written ready handler. Register it alongside [JdaCommandManager.eventListener].
+ *
+ * - [PushType.GLOBAL] syncs once on `ReadyEvent`.
+ * - [PushType.GUILD] syncs on each `GuildReadyEvent`.
+ * - [PushType.NONE] never syncs.
+ *
+ * Usable from Java (`new CommandSyncListener(manager, PushType.GLOBAL)`); Kotlin callers can also
+ * obtain one via [JdaCommandManager.commandSyncListener].
+ */
+public class CommandSyncListener(
+    private val manager: JdaCommandManager,
+    private val pushType: PushType,
+) : ListenerAdapter() {
+
+    override fun onReady(event: ReadyEvent) {
+        if (pushType == PushType.GLOBAL) manager.updateGlobalCommands(event.jda)
+    }
+
+    override fun onGuildReady(event: GuildReadyEvent) {
+        if (pushType == PushType.GUILD) manager.updateGuildCommands(event.guild)
     }
 }
-
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-}
-
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        mavenCentral()
-        maven("https://repo.papermc.io/repository/maven-public/") {
-            name = "papermc"
-        }
-    }
-}
-
-rootProject.name = "Polyglot"
-
-include(
-    ":core",
-    ":platform-cli",
-    ":platform-jda",
-    ":platform-jda-ktx",
-    ":platform-paper-common",
-    ":platform-paper-legacy",
-    ":platform-paper-modern",
-)
-
-// runnable demos (not published, excluded from coverage aggregation)
-include(
-    ":examples:cli-sample",
-    ":examples:jda-sample",
-    ":examples:paper-sample",
-)

@@ -37,8 +37,11 @@ import lol.simeon.polyglot.annotation.Command
 import lol.simeon.polyglot.annotation.Named
 import lol.simeon.polyglot.jda.JdaCommandManager
 import lol.simeon.polyglot.jda.JdaSender
+import lol.simeon.polyglot.jda.PushType
 import lol.simeon.polyglot.jda.annotation.GuildOnly
 import lol.simeon.polyglot.jda.annotation.RequirePermissions
+import lol.simeon.polyglot.jda.ktx.withPolyglot
+import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.Permission
 import java.awt.Color
 
@@ -79,9 +82,14 @@ fun main() {
     val manager = JdaCommandManager(prefixProvider = { listOf("!") })
     manager.register(PollCommand())
 
-    // In a real bot:
-    //   val jda = JDABuilder.createDefault(token, GatewayIntent.MESSAGE_CONTENT).build()
-    //   jda.addEventListener(manager.eventListener)
-    //   manager.updateGuildCommands(guild)   // or jda.updateCommands().addCommands(manager.buildSlashCommands())
+    // One call wires the interaction/message listener AND auto-syncs slash commands on ready — no
+    // hand-written GuildReadyHandler, no manual updateCommands. PushType.GLOBAL pushes once when the
+    // session is ready; use PushType.GUILD for instant propagation while developing.
+    val builder = JDABuilder.createDefault(System.getenv("DISCORD_TOKEN") ?: "TOKEN")
+        .withPolyglot(manager, PushType.GLOBAL)
+    //   val jda = builder.enableIntents(GatewayIntent.MESSAGE_CONTENT).build()
+    //   println(manager.inviteUrl(jda, Permission.MESSAGE_HISTORY))
+
+    println("Configured builder: $builder")
     println("Slash payloads: " + manager.buildSlashCommands().joinToString { it.name })
 }

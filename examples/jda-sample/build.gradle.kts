@@ -40,5 +40,6 @@ application {
 }
 
 dependencies {
-    implementation(project(":platform-jda"))
+    // platform-jda-ktx brings platform-jda (and JDA) transitively via api.
+    implementation(project(":platform-jda-ktx"))
 }
