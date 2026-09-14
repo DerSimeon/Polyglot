@@ -34,6 +34,12 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenCentral()
+        maven("https://maven.fabricmc.net/") {
+            name = "fabric"
+        }
+        maven("https://maven.neoforged.net/releases") {
+            name = "neoforged"
+        }
     }
 }
 
@@ -42,11 +48,25 @@ plugins {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    // Loom and ModDevGradle declare their own (Minecraft-specific) repositories per project; those
+    // projects use only theirs, every other module resolves against the list below.
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
         mavenCentral()
         maven("https://repo.papermc.io/repository/maven-public/") {
             name = "papermc"
+        }
+        maven("https://maven.fabricmc.net/") {
+            name = "fabric"
+        }
+        maven("https://libraries.minecraft.net") {
+            name = "mojang"
+        }
+        maven("https://maven.neoforged.net/releases") {
+            name = "neoforged"
+        }
+        maven("https://thedarkcolour.github.io/KotlinForForge/") {
+            name = "kotlinforforge"
         }
     }
 }
@@ -61,6 +81,12 @@ include(
     ":platform-paper-common",
     ":platform-paper-legacy",
     ":platform-paper-modern",
+    ":platform-brigadier",
+    ":platform-minecraft-common",
+    ":platform-fabric-legacy",
+    ":platform-fabric-modern",
+    ":platform-neoforge-legacy",
+    ":platform-neoforge-modern",
 )
 
 // runnable demos (not published, excluded from coverage aggregation)
@@ -68,4 +94,6 @@ include(
     ":examples:cli-sample",
     ":examples:jda-sample",
     ":examples:paper-sample",
+    ":examples:fabric-sample",
+    ":examples:neoforge-sample",
 )

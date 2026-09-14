@@ -96,4 +96,10 @@ class CliCommandManagerTest {
         assertTrue("hello" in values)
         assertTrue("echo" in values)
     }
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun `deprecated tokenizer delegates to core`() {
+        assertEquals(listOf("say", "hello world", "x"), CommandLineTokenizer.tokenize("say \"hello world\" x"))
+    }
 }

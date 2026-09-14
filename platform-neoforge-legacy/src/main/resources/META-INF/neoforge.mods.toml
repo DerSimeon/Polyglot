@@ -1,0 +1,31 @@
+# no modLoader: a library jar without entry points (NeoForge's implicit low-code loader)
+license = "BSD-3-Clause"
+issueTrackerURL = "https://github.com/DerSimeon/Polyglot/issues"
+
+[[mods]]
+modId = "polyglot"
+version = "${version}"
+displayName = "Polyglot"
+authors = "Simeon L."
+description = '''Annotation-based multi-platform command library.'''
+
+[[dependencies.polyglot]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.11,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.polyglot]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.11,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.polyglot]]
+modId = "kotlinforforge"
+type = "required"
+versionRange = "[6.3,)"
+ordering = "BEFORE"
+side = "BOTH"

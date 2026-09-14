@@ -12,6 +12,22 @@ junit = "5.11.4"
 mockk = "1.14.2"
 mockbukkit = "4.116.3"
 foojay = "1.0.0"
+# minecraft mod loaders
+loom = "1.17.20"
+moddev = "2.0.147"
+brigadier = "1.3.10"
+minecraftLegacy = "1.21.11"
+minecraftModern = "26.2"
+neoformLegacy = "1.21.11-20251209.172050"
+neoforgeLegacy = "21.11.45"
+neoforgeModern = "26.2.0.88"
+fabricLoader = "0.19.5"
+fabricApiLegacy = "0.141.6+1.21.11"
+fabricApiModern = "0.160.0+26.2"
+fabricLanguageKotlin = "1.13.13+kotlin.2.4.10"
+fabricPermissionsApiLegacy = "0.6.1"
+fabricPermissionsApiModern = "0.7.0"
+kotlinForForge = "6.3.0"
 
 [libraries]
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
@@ -19,6 +35,16 @@ coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", ve
 jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
 paper-api-legacy = { module = "io.papermc.paper:paper-api", version.ref = "paperLegacy" }
 paper-api-modern = { module = "io.papermc.paper:paper-api", version.ref = "paperModern" }
+brigadier = { module = "com.mojang:brigadier", version.ref = "brigadier" }
+minecraft-legacy = { module = "com.mojang:minecraft", version.ref = "minecraftLegacy" }
+minecraft-modern = { module = "com.mojang:minecraft", version.ref = "minecraftModern" }
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabricLoader" }
+fabric-api-legacy = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabricApiLegacy" }
+fabric-api-modern = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabricApiModern" }
+fabric-language-kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabricLanguageKotlin" }
+fabric-permissions-api-legacy = { module = "me.lucko:fabric-permissions-api", version.ref = "fabricPermissionsApiLegacy" }
+fabric-permissions-api-modern = { module = "me.lucko:fabric-permissions-api", version.ref = "fabricPermissionsApiModern" }
+kotlinforforge = { module = "thedarkcolour:kotlinforforge-neoforge", version.ref = "kotlinForForge" }
 
 # test
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
@@ -42,3 +68,6 @@ detekt = { id = "dev.detekt", version.ref = "detekt" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
+fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "loom" }
+fabric-loom-remap = { id = "net.fabricmc.fabric-loom-remap", version.ref = "loom" }
+moddev = { id = "net.neoforged.moddev", version.ref = "moddev" }

@@ -40,6 +40,14 @@ plugins {
     id("polyglot.kotlin-library")
 }
 
+// A stable module name keeps jar-in-jar nesting on NeoForge (which derives module names from file
+// names otherwise) conflict-free.
+tasks.withType<Jar>().configureEach {
+    manifest {
+        attributes("Automatic-Module-Name" to "lol.simeon.polyglot.${project.name.replace('-', '.')}")
+    }
+}
+
 pluginManager.withPlugin("com.vanniktech.maven.publish") {
     extensions.configure<MavenPublishBaseExtension> {
         publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = false)

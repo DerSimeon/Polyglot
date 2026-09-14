@@ -28,16 +28,14 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 package lol.simeon.polyglot.cli
 
 /** Splits a raw command line into tokens, honouring double-quoted segments. */
+@Deprecated(
+    message = "Moved to core",
+    replaceWith = ReplaceWith("CommandLineTokenizer", "lol.simeon.polyglot.argument.CommandLineTokenizer"),
+)
 public object CommandLineTokenizer {
-    private val pattern = Regex("\"([^\"]*)\"|(\\S+)")
-
     public fun tokenize(line: String): List<String> =
-        pattern.findAll(line).map { match ->
-            val quoted = match.groupValues[1]
-            quoted.ifEmpty { match.groupValues[2] }
-        }.toList()
+        lol.simeon.polyglot.argument.CommandLineTokenizer.tokenize(line)
 }

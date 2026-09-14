@@ -40,6 +40,7 @@ import lol.simeon.polyglot.dsl.CommandBuilder
 import lol.simeon.polyglot.dsl.command
 import lol.simeon.polyglot.exception.PolyglotException
 import lol.simeon.polyglot.exception.UnknownCommandException
+import lol.simeon.polyglot.execution.ArgumentInput
 import lol.simeon.polyglot.execution.CommandCompleter
 import lol.simeon.polyglot.execution.CommandExecutor
 import lol.simeon.polyglot.message.DefaultMessageProvider
@@ -109,6 +110,20 @@ public abstract class CommandManager<S> {
         if (input.isEmpty()) return
         val root = resolveRoot(input.first()) ?: throw UnknownCommandException(input.first())
         executor.execute(root, sender, input.drop(1))
+    }
+
+    /**
+     * Executes the leaf at the end of [path] with arguments a platform already parsed natively
+     * (see [ArgumentInput] and [CommandExecutor.executeResolved]). Throws [PolyglotException] on failure.
+     */
+    public suspend fun dispatchResolved(
+        sender: S,
+        path: List<CommandNode<S>>,
+        inputs: Map<String, ArgumentInput>,
+        optionTokens: List<String> = emptyList(),
+        rawInput: List<String> = emptyList(),
+    ) {
+        executor.executeResolved(path, sender, inputs, optionTokens, rawInput)
     }
 
     /** Like [dispatch] but returns the failure instead of throwing. */

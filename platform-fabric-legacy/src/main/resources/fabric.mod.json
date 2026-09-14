@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "polyglot",
+  "version": "${version}",
+  "name": "Polyglot",
+  "description": "Annotation-based multi-platform command library.",
+  "authors": [
+    "Simeon L."
+  ],
+  "contact": {
+    "sources": "https://github.com/DerSimeon/Polyglot"
+  },
+  "license": "BSD-3-Clause",
+  "environment": "*",
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "fabric-language-kotlin": ">=1.13.13",
+    "fabric-command-api-v2": "*",
+    "minecraft": ">=1.21.11"
+  },
+  "suggests": {
+    "fabric-permissions-api-v0": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": [
+        "library"
+      ]
+    }
+  }
+}
