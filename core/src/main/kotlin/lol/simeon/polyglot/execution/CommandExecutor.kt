@@ -42,6 +42,7 @@ import lol.simeon.polyglot.exception.NoPermissionException
 import lol.simeon.polyglot.exception.PolyglotException
 import lol.simeon.polyglot.exception.UnknownCommandException
 import lol.simeon.polyglot.model.CommandArgument
+import lol.simeon.polyglot.model.CommandHandler
 import lol.simeon.polyglot.model.CommandNode
 import lol.simeon.polyglot.permission.PermissionResolver
 
@@ -57,31 +58,96 @@ public class CommandExecutor<S>(
      * @param root the already-resolved root command node
      * @param args the tokens following the root command name
      */
-    @Suppress("ThrowsCount", "TooGenericExceptionCaught")
     public suspend fun execute(root: CommandNode<S>, sender: S, args: List<String>) {
         val queue = ArgumentQueue(args)
-        val path = mutableListOf(root.name)
-        var node = root
-        authorize(node, sender)
+        val path = mutableListOf(root)
+        authorize(root, sender)
 
         while (queue.hasNext()) {
-            val child = node.child(queue.peek()!!) ?: break
+            val child = path.last().child(queue.peek()!!) ?: break
             queue.next()
-            node = child
-            path += node.name
-            authorize(node, sender)
+            path += child
+            authorize(child, sender)
         }
 
-        val handler = node.handler ?: throw UnknownCommandException(path.joinToString(" "))
+        val node = path.last()
+        val handler = node.handler ?: throw UnknownCommandException(pathOf(path))
         val parsed = parseArguments(node.arguments, sender, queue)
-        val context = CommandContext(sender, path.joinToString(" "), parsed, args)
+        invoke(handler, CommandContext(sender, pathOf(path), parsed, args))
+    }
 
+    /**
+     * Executes the leaf at the end of [path] (root first) when the platform has already walked the
+     * command tree and parsed some or all positional arguments natively. Each node on [path] is
+     * authorized in order. [inputs] maps positional argument names to how they were supplied;
+     * arguments missing from the map are treated as [ArgumentInput.Absent]. Named options and
+     * flags, if the leaf declares any, are parsed from [optionTokens] using the usual
+     * `--name value` / `-x value` / `--flag` syntax. When the leaf ends with a greedy argument
+     * supplied as [ArgumentInput.Raw] tokens, options are also extracted from those tokens (so a
+     * platform may hand over one undivided tail).
+     */
+    public suspend fun executeResolved(
+        path: List<CommandNode<S>>,
+        sender: S,
+        inputs: Map<String, ArgumentInput>,
+        optionTokens: List<String> = emptyList(),
+        rawInput: List<String> = emptyList(),
+    ) {
+        require(path.isNotEmpty()) { "path must contain at least the root node" }
+        for (node in path) authorize(node, sender)
+
+        val node = path.last()
+        val handler = node.handler ?: throw UnknownCommandException(pathOf(path))
+        val positionals = node.arguments.filter { it.positional }
+        val options = node.arguments.filter { it.named || it.flag }
+
+        val effectiveInputs = inputs.toMutableMap()
+        val optionValues: Map<String, Any?>
+        val greedy = positionals.lastOrNull()?.takeIf { it.greedy }
+        val greedyTokens = greedy?.let { (inputs[it.name] as? ArgumentInput.Raw)?.tokens }
+        if (options.isNotEmpty() && greedyTokens != null) {
+            val rest = mutableListOf<String>()
+            optionValues = parseOptions(options, sender, ArgumentQueue(greedyTokens + optionTokens), strict = false, rest)
+            effectiveInputs[greedy.name] = if (rest.isEmpty()) ArgumentInput.Absent else ArgumentInput.Raw(rest)
+        } else if (options.isNotEmpty()) {
+            optionValues = parseOptions(options, sender, ArgumentQueue(optionTokens), strict = true)
+        } else {
+            if (optionTokens.isNotEmpty()) {
+                throw ArgumentParseException("options", "option", optionTokens.first(), "unexpected input")
+            }
+            optionValues = emptyMap()
+        }
+
+        val result = LinkedHashMap<String, Any?>()
+        for (arg in positionals) {
+            result[arg.name] = bindInput(arg, sender, effectiveInputs[arg.name] ?: ArgumentInput.Absent)
+        }
+        result += optionValues
+        invoke(handler, CommandContext(sender, pathOf(path), result, rawInput))
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun invoke(handler: CommandHandler<S>, context: CommandContext<S>) {
         try {
             handler.handle(context)
         } catch (ex: PolyglotException) {
             throw ex
         } catch (ex: Throwable) {
-            throw CommandExecutionException(path.joinToString(" "), ex)
+            throw CommandExecutionException(context.commandPath, ex)
+        }
+    }
+
+    private fun pathOf(path: List<CommandNode<S>>): String = path.joinToString(" ") { it.name }
+
+    private suspend fun bindInput(arg: CommandArgument, sender: S, input: ArgumentInput): Any? = when (input) {
+        is ArgumentInput.Absent -> if (arg.optional) null else throw MissingArgumentException(arg.name)
+        is ArgumentInput.Raw -> bindArgument(arg, sender, ArgumentQueue(input.tokens))
+        is ArgumentInput.Resolved -> {
+            val value = input.value
+            if (value != null) checkChoice(arg, value.toString())
+            validateRange(arg, value)
+            validateCustom(arg, value)
+            value
         }
     }
 
@@ -117,10 +183,31 @@ public class CommandExecutor<S>(
         queue: ArgumentQueue,
     ): Map<String, Any?> {
         val options = arguments.filter { it.named || it.flag }
+        val positionalTokens = mutableListOf<String>()
+        val optionValues = parseOptions(options, sender, queue, strict = false, positionalSink = positionalTokens)
+
+        val result = LinkedHashMap<String, Any?>()
+        val positionalQueue = ArgumentQueue(positionalTokens)
+        for (arg in arguments.filter { it.positional }) {
+            result[arg.name] = bindArgument(arg, sender, positionalQueue)
+        }
+        result += optionValues
+        return result
+    }
+
+    /**
+     * Consumes `--name value`, `-x value` and `--flag` tokens for [options]. Tokens that match no
+     * option are appended to [positionalSink] when [strict] is false, or rejected when true.
+     */
+    private suspend fun parseOptions(
+        options: List<CommandArgument>,
+        sender: S,
+        queue: ArgumentQueue,
+        strict: Boolean,
+        positionalSink: MutableList<String> = mutableListOf(),
+    ): Map<String, Any?> {
         val byLong = options.associateBy { it.name.lowercase() }
         val byShort = options.mapNotNull { arg -> arg.shorthand?.let { it to arg } }.toMap()
-
-        val positionalTokens = mutableListOf<String>()
         val namedValues = HashMap<String, String>()
         val setFlags = HashSet<String>()
 
@@ -128,7 +215,8 @@ public class CommandExecutor<S>(
             val token = queue.next()
             val option = matchOption(token, byLong, byShort)
             when {
-                option == null -> positionalTokens += token
+                option == null && strict -> throw ArgumentParseException("options", "option", token, "unknown option")
+                option == null -> positionalSink += token
                 option.flag -> setFlags += option.name
                 !queue.hasNext() -> throw MissingArgumentException(option.name)
                 else -> namedValues[option.name] = queue.next()
@@ -136,14 +224,10 @@ public class CommandExecutor<S>(
         }
 
         val result = LinkedHashMap<String, Any?>()
-        val positionalQueue = ArgumentQueue(positionalTokens)
-        for (arg in arguments.filter { it.positional }) {
-            result[arg.name] = bindArgument(arg, sender, positionalQueue)
-        }
-        for (arg in arguments.filter { it.named }) {
+        for (arg in options.filter { it.named }) {
             result[arg.name] = bindNamed(arg, sender, namedValues[arg.name])
         }
-        for (arg in arguments.filter { it.flag }) {
+        for (arg in options.filter { it.flag }) {
             result[arg.name] = arg.name in setFlags
         }
         return result
@@ -178,15 +262,19 @@ public class CommandExecutor<S>(
 
     private suspend fun parseSingle(arg: CommandArgument, sender: S, queue: ArgumentQueue): Any? {
         val token = queue.peek()!!
-        if (arg.choices.isNotEmpty() && arg.choices.none { it.equals(token, ignoreCase = true) }) {
-            throw ArgumentParseException(arg.name, "choice", token, "must be one of ${arg.choices}")
-        }
+        checkChoice(arg, token)
         val parser = parsers.parserFor(arg.type)
             ?: throw ArgumentParseException(arg.name, arg.type.simpleName ?: "?", token, "no parser registered")
         val value = parser.parse(ParseContext(sender, arg.name, queue))
         validateRange(arg, value)
         validateCustom(arg, value)
         return value
+    }
+
+    private fun checkChoice(arg: CommandArgument, token: String) {
+        if (arg.choices.isNotEmpty() && arg.choices.none { it.equals(token, ignoreCase = true) }) {
+            throw ArgumentParseException(arg.name, "choice", token, "must be one of ${arg.choices}")
+        }
     }
 
     private fun validateRange(arg: CommandArgument, value: Any?) {

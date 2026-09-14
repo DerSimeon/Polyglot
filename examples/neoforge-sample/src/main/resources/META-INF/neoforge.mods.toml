@@ -1,0 +1,37 @@
+modLoader = "kotlinforforge"
+loaderVersion = "[6,)"
+license = "BSD-3-Clause"
+
+[[mods]]
+modId = "polyglot_neoforge_sample"
+version = "${version}"
+displayName = "Polyglot NeoForge Sample"
+description = '''Demo mod registering the Polyglot party command.'''
+
+[[dependencies.polyglot_neoforge_sample]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.11,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.polyglot_neoforge_sample]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.11,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.polyglot_neoforge_sample]]
+modId = "kotlinforforge"
+type = "required"
+versionRange = "[6.3,)"
+ordering = "BEFORE"
+side = "BOTH"
+
+[[dependencies.polyglot_neoforge_sample]]
+modId = "polyglot"
+type = "required"
+versionRange = "[1.2,)"
+ordering = "BEFORE"
+side = "BOTH"

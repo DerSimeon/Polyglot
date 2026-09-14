@@ -34,6 +34,7 @@ package lol.simeon.polyglot.cli
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import lol.simeon.polyglot.CommandManager
+import lol.simeon.polyglot.argument.CommandLineTokenizer
 import lol.simeon.polyglot.exception.PolyglotException
 import lol.simeon.polyglot.model.CommandNode
 import lol.simeon.polyglot.suggestion.Suggestion

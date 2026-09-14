@@ -31,12 +31,22 @@
 
 plugins {
     alias(libs.plugins.kover)
+    // Declared (unapplied) here so every module shares one plugin classloader: Loom and
+    // ModDevGradle resolve cross-project dependencies and choke on per-project plugin copies.
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.mavenPublish) apply false
+    alias(libs.plugins.fabric.loom) apply false
+    alias(libs.plugins.fabric.loom.remap) apply false
+    alias(libs.plugins.moddev) apply false
 }
 
-// aggregate coverage from every library module (examples are demos, excluded)
+// aggregate coverage from every library module. Excluded: examples (demos) and the thin
+// Fabric/NeoForge glue modules, which only run inside a live mod loader.
 dependencies {
     subprojects
         .filterNot { it.path.startsWith(":examples") }
+        .filterNot { it.name.startsWith("platform-fabric") || it.name.startsWith("platform-neoforge") }
         .forEach { kover(project(it.path)) }
 }
 

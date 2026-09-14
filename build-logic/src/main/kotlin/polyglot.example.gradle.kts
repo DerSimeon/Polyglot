@@ -36,6 +36,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 // Lightweight conventions for (unpublished) example apps: JVM 21, parameter names, no explicit-API,
 // no detekt/kover/publishing. Kotlin is applied by the example's own `plugins {}` block.
 
+// mod loaders validate mod versions, so examples carry the library version too
+version = providers.gradleProperty("polyglot.version").orElse("1.0.0").get()
+
 pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
     extensions.configure<KotlinJvmProjectExtension> {
         jvmToolchain(21)

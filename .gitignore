@@ -40,3 +40,5 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+# mod loader run directories (examples)
+examples/*/run/

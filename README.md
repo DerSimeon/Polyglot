@@ -2,8 +2,8 @@
 
 An enterprise-grade, annotation-based **multi-platform command library** for the JVM, written in
 Kotlin. Define a command tree once with a single `@Command` annotation (or a type-safe DSL) and run
-it on the CLI, Discord (JDA), and PaperMC — with built-in argument parsing, tab-completion,
-permissions, and coroutine-based execution.
+it on the CLI, Discord (JDA), PaperMC, Fabric and NeoForge — with built-in argument parsing,
+tab-completion, permissions, and coroutine-based execution.
 
 ## Modules
 
@@ -15,6 +15,12 @@ permissions, and coroutine-based execution.
 | `platform-paper-common` | `lol.simeon.polyglot:platform-paper-common` | Shared Paper/Brigadier bridge (JVM 21) |
 | `platform-paper-legacy` | `lol.simeon.polyglot:platform-paper-legacy` | PaperMC **1.21.11** (JVM 21) |
 | `platform-paper-modern` | `lol.simeon.polyglot:platform-paper-modern` | PaperMC **26.2** (JVM 25) |
+| `platform-brigadier` | `lol.simeon.polyglot:platform-brigadier` | Generic command tree → Brigadier translation (JVM 21) |
+| `platform-minecraft-common` | `lol.simeon.polyglot:platform-minecraft-common` | Shared vanilla (Mojang-mapped) sender, guards, argument types (JVM 21) |
+| `platform-fabric-legacy` | `lol.simeon.polyglot:platform-fabric-legacy` | Fabric, Minecraft **1.21.11** (JVM 21) |
+| `platform-fabric-modern` | `lol.simeon.polyglot:platform-fabric-modern` | Fabric, Minecraft **26.2** (JVM 25) |
+| `platform-neoforge-legacy` | `lol.simeon.polyglot:platform-neoforge-legacy` | NeoForge **21.11** / Minecraft 1.21.11 (JVM 21) |
+| `platform-neoforge-modern` | `lol.simeon.polyglot:platform-neoforge-modern` | NeoForge **26.2** / Minecraft 26.2 (JVM 25) |
 
 ## Core concepts
 
@@ -23,7 +29,8 @@ permissions, and coroutine-based execution.
 - **First parameter is the sender** (or the whole `CommandContext`); the rest are arguments, resolved
   by name (compile with `-java-parameters`, which the build does automatically).
 - **Built-in argument types**: all primitives, `String`, `Char`, and **any enum** — plus
-  per-platform types (`Material`/`Player`/`World` on Paper, `Member`/`User`/`Role` on JDA).
+  per-platform types (`Material`/`Player`/`World` on Paper, `Member`/`User`/`Role` on JDA,
+  `ServerPlayer`/`Entity`/`ServerLevel`/`Item`/`Block` on Fabric & NeoForge).
 - **Consumer-extensible**: register your own `ArgumentParser`, `SuggestionProvider`, and
   `PermissionResolver`.
 - **Coroutines**: command handlers may be `suspend` functions.
@@ -39,7 +46,10 @@ platform-specific preconditions that run before the handler (and before descendi
 guard on a group protects its subcommands). On JDA: `@RequirePermissions(Permission.…)` (type-safe,
 AND semantics, checked per-channel) and `@GuildOnly`. Both are also mirrored onto Discord's native
 command metadata for root commands (`DefaultMemberPermissions` / guild-only context) so unauthorized
-users don't even see the command. Register your own via a `GuardContributor`.
+users don't even see the command. On Fabric/NeoForge: `@OpLevel(n)` (vanilla operator level) and
+`@PlayerOnly`, both mirrored into the Brigadier tree's `requires` so unauthorized sources don't see
+the node (any guard implementing `BrigadierRequirement` gets the same treatment). Register your own
+via a `GuardContributor`.
 
 ### Named options, flags & validation
 
@@ -145,6 +155,39 @@ manager.register(PartyCommand())
 manager.install()                                       // publishes via the COMMANDS lifecycle event
 ```
 
+### Fabric & NeoForge
+
+Both loaders share `platform-minecraft-common` (`MinecraftSender`, guards, argument types) and
+`platform-brigadier`, which translates the command tree into a **native Brigadier tree**: every
+subcommand is a literal, positional arguments get native argument types (`IntegerArgumentType` with
+`@Range` bounds, `EntityArgument.player()`, `DimensionArgument`, item/block resources, …) so clients
+validate and highlight them, and everything else (enums, `@Choice`, custom `ArgumentParser`s) becomes
+a string node parsed and completed by the core engine. `@Named` options and `@Flag`s are collected in
+one trailing `options` node (`--count 3 -d`); a trailing `@Greedy` argument absorbs them instead.
+
+```kotlin
+// Fabric — from your ModInitializer (Fabric Language Kotlin)
+val manager = FabricPlatform.createManager()          // fabric-permissions-api picked up when loaded
+manager.register(PartyCommand())
+FabricPlatform.install(manager)                       // CommandRegistrationCallback
+
+// NeoForge — during mod construction (KotlinForForge)
+val manager = NeoForgePlatform.createManager(namespace = MOD_ID)
+manager.register(PartyCommand())
+NeoForgePlatform.install(manager)                     // RegisterCommandsEvent + PermissionGatherEvent
+```
+
+`MinecraftSender` exposes `source` (the `CommandSourceStack`), `player`, `entity`, `level`, `server`,
+`reply(String | Component)` and `replyError(...)`. String `@Permission` nodes default to vanilla
+operator level 2 (`OpLevelPermissionResolver(level)`); on Fabric they are checked through
+[fabric-permissions-api](https://github.com/lucko/fabric-permissions-api) when that mod is present,
+on NeoForge they are registered as boolean `PermissionNode`s (`<namespace>:<node>`) with
+`PermissionAPI`. Handlers run on the server thread (`suspend` handlers block it — offload heavy
+work yourself). The 1.21.11 Fabric artifact is intermediary-mapped (`modImplementation` it); 26.2
+is unobfuscated, so every Minecraft artifact is a plain Mojang-mapped library there. Nest the chain
+into your mod with `include(...)` (Fabric) / `jarJar(...)` (NeoForge); the Kotlin runtime comes from
+Fabric Language Kotlin / KotlinForForge.
+
 ## Examples
 
 Runnable demos live under `examples/` (not published):
@@ -153,7 +196,9 @@ Runnable demos live under `examples/` (not published):
 ./gradlew :examples:cli-sample:run        # end-to-end CLI demo
 ```
 
-`examples/jda-sample` and `examples/paper-sample` show bot and plugin wiring.
+`examples/jda-sample` and `examples/paper-sample` show bot and plugin wiring;
+`examples/fabric-sample` and `examples/neoforge-sample` are mods you can launch with
+`./gradlew :examples:fabric-sample:runServer` / `:examples:neoforge-sample:runServer`.
 
 ## Building
 
@@ -166,7 +211,13 @@ Runnable demos live under `examples/` (not published):
 - **Static analysis**: detekt with the `OneTopLevelClassOrObjectPerFile` rule enabled (production
   sources).
 - **Coverage**: Kover, aggregated with an **80% line** verification floor (currently ~85%).
-- **Toolchains**: JVM 21 everywhere except `platform-paper-modern` (JVM 25, per Minecraft 26.2).
+- **Toolchains**: JVM 21 everywhere except the `*-modern` modules (JVM 25, per Minecraft 26.2).
+- **Minecraft**: `platform-minecraft-common` is compiled once against vanilla 1.21.11 via
+  ModDevGradle's vanilla mode and runs unchanged on 26.2 (verified by compiling it against 26.2);
+  `platform-fabric-legacy` recompiles its sources so Loom can remap them to intermediary. Loom and
+  ModDevGradle download Minecraft on first build. The Fabric/NeoForge glue modules are excluded from
+  the coverage aggregate (they only run inside a live loader); the common and Brigadier modules are
+  unit-tested with a real `CommandDispatcher` and bootstrapped vanilla registries.
 - **CI**: `.github/workflows/ci.yml` builds/tests on every push and PR; `publish.yml` releases to
   Maven Central on a `v*` tag (set the `MAVEN_CENTRAL_*` secrets and store the signing key as
   base64 in `SIGNING_IN_MEMORY_KEY`).
